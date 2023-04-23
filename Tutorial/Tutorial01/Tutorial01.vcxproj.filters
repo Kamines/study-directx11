@@ -46,4 +46,11 @@
       <Filter>리소스 파일</Filter>
     </Image>
   </ItemGroup>
+  <ItemGroup>
+    <FxCompile Include="Tutorial_PS.hlsl" />
+    <FxCompile Include="Tutorial_VS.hlsl" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Tutorial.fxh" />
+  </ItemGroup>
 </Project>
