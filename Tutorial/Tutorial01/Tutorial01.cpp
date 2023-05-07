@@ -327,6 +327,25 @@ HRESULT InitDevice()
     if (FAILED(hr))
         return hr;
 
+    bool bIsWireFrame = 1;
+    D3D11_RASTERIZER_DESC RasterizerDesc = {};
+    if (bIsWireFrame)
+    {
+        // 와이어 프레임 설정하기.
+        RasterizerDesc.FillMode = D3D11_FILL_WIREFRAME;
+        RasterizerDesc.CullMode = D3D11_CULL_NONE;
+    }
+    else
+    {
+        RasterizerDesc.FillMode = D3D11_FILL_SOLID;
+        RasterizerDesc.CullMode = D3D11_CULL_BACK;
+    }
+
+    ID3D11RasterizerState* RasterizerState = nullptr;
+    hr = g_pd3dDevice->CreateRasterizerState(&RasterizerDesc, &RasterizerState);
+    g_pImmediateContext->RSSetState(RasterizerState);
+    RasterizerState->Release();
+    
     // Obtain DXGI factory from device (since we used nullptr for pAdapter above)
     IDXGIFactory1* dxgiFactory = nullptr;
     {
@@ -478,19 +497,17 @@ HRESULT InitDevice()
     if (FAILED(hr))
         return hr;
 
-
-
     // Create vertex buffer
     SimpleVertex vertices[] =
     {
-        { XMFLOAT3(-1.0f, 1.0f, -1.0f), XMFLOAT4(0.0f, 0.0f, 1.0f, 1.0f) },
-        { XMFLOAT3(1.0f, 1.0f, -1.0f), XMFLOAT4(0.0f, 1.0f, 0.0f, 1.0f) },
-        { XMFLOAT3(1.0f, 1.0f, 1.0f), XMFLOAT4(0.0f, 1.0f, 1.0f, 1.0f) },
-        { XMFLOAT3(-1.0f, 1.0f, 1.0f), XMFLOAT4(1.0f, 0.0f, 0.0f, 1.0f) },
-        { XMFLOAT3(-1.0f, -1.0f, -1.0f), XMFLOAT4(1.0f, 0.0f, 1.0f, 1.0f) },
-        { XMFLOAT3(1.0f, -1.0f, -1.0f), XMFLOAT4(1.0f, 1.0f, 0.0f, 1.0f) },
-        { XMFLOAT3(1.0f, -1.0f, 1.0f), XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f) },
-        { XMFLOAT3(-1.0f, -1.0f, 1.0f), XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f) },
+       { XMFLOAT3(-1.0f, 1.0f, -1.0f), XMFLOAT4(0.0f, 0.0f, 1.0f, 1.0f),},
+       { XMFLOAT3(1.0f, 1.0f, -1.0f), XMFLOAT4(0.0f, 1.0f, 0.0f, 1.0f), },
+       { XMFLOAT3(-1.0f, -1.0f, -1.0f), XMFLOAT4(1.0f, 0.0f, 0.0f, 1.0f), },
+       { XMFLOAT3(1.0f, -1.0f, -1.0f), XMFLOAT4(0.0f, 1.0f, 1.0f, 1.0f), },
+       { XMFLOAT3(-1.0f, 1.0f, 1.0f), XMFLOAT4(0.0f, 0.0f, 1.0f, 1.0f), },
+       { XMFLOAT3(1.0f, 1.0f, 1.0f), XMFLOAT4(1.0f, 0.0f, 0.0f, 1.0f), },
+       { XMFLOAT3(-1.0f, -1.0f, 1.0f), XMFLOAT4(0.0f, 1.0f, 0.0f, 1.0f), },
+       { XMFLOAT3(1.0f, -1.0f, 1.0f), XMFLOAT4(0.0f, 1.0f, 1.0f, 1.0f), },
     };
 
     D3D11_BUFFER_DESC bd = {};
@@ -514,23 +531,23 @@ HRESULT InitDevice()
     // Create index buffer
     WORD indices[] =
     {
-        3,1,0,
-        2,1,3,
+        0, 1, 2,    // side 1
+        2, 1, 3,
 
-        0,5,4,
-        1,5,0,
+        4, 0, 6,    // side 2
+        6, 0, 2,
 
-        3,4,7,
-        0,4,3,
+        7, 5, 6,    // side 3
+        6, 5, 4,
 
-        1,6,5,
-        2,6,1,
+        3, 1, 7,    // side 4
+        7, 1, 5,
 
-        2,7,6,
-        3,7,2,
+        4, 5, 0,    // side 5
+        0, 5, 1,
 
-        6,4,5,
-        7,4,6,
+        3, 7, 2,    // side 6
+        2, 7, 6,
     };
     bd.Usage = D3D11_USAGE_DEFAULT;
     bd.ByteWidth = sizeof(WORD) * 36;        // 36 vertices needed for 12 triangles in a triangle list
@@ -560,8 +577,8 @@ HRESULT InitDevice()
     g_World = XMMatrixIdentity();
 
     // Initialize the view matrix
-    XMVECTOR Eye = XMVectorSet(0.0f, 1.0f, -5.0f, 0.0f);
-    XMVECTOR At = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
+    XMVECTOR Eye = XMVectorSet(0.0f, 2.0f, -4.0f, 0.0f);
+    XMVECTOR At = XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f);
     XMVECTOR Up = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
     g_View = XMMatrixLookAtLH(Eye, At, Up);
 
@@ -608,10 +625,14 @@ void Render()
         t = (timeCur - timeStart) / 1000.0f;
     }
 
+    
+
+
     //
     // Animate the cube
     //
     g_World = XMMatrixRotationY(t);
+
 
     //
     // Clear the back buffer
